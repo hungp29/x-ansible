@@ -3,7 +3,8 @@
   register: microk8s_status
   changed_when: false
 
-- set_fact:
+- name: Parse enabled addons
+  set_fact:
     addons_enabled: >-
       {{
         microk8s_status.stdout
