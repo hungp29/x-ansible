@@ -4,11 +4,11 @@ metadata:
  name: {{ cluster_issuer_name }}
 spec:
  acme:
-   email: "{{ acme_email }}"
-   server: "{{ acme_server }}"
+   email: {{ acme_email }}
+   server: {{ acme_server }}
    privateKeySecretRef:
-     name: "{{ acme_private_key_secret }}"
+     name: {{ acme_private_key_secret }}
    solvers:
    - http01:
        ingress:
-         ingressClassName: "{{ ingress_class_name }}"
+         ingressClassName: {{ ingress_class_name }}
