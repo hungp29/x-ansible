@@ -27,15 +27,11 @@ jobs:
 
     - name: Run Ansible
       run: |
-        ansible-playbook playbooks/site.yml
-    
-    - name: Deployment Summary
-      run: |
+        ansible-playbook playbooks/site.yml | tee ansible.log
+        
         echo "## 🚀 Deployment Completed" >> $GITHUB_STEP_SUMMARY
-        echo "- Time: $(date)" >> $GITHUB_STEP_SUMMARY
-        echo "- Environment: **production**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📦 Ansible Recap" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
-        grep -A3 "PLAY RECAP" ansible.log >> $GITHUB_STEP_SUMMARY
+        grep -A3 "PLAY RECAP" ansible.log >> $GITHUB_STEP_SUMMARY || echo "No recap found" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
