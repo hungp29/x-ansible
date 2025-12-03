@@ -4,5 +4,5 @@
 - name: Enable addons
   include_tasks: addons.yml
 
-- name: Configure MetalLB
-  include_tasks: metallb.yml
+# - name: Configure MetalLB
+#   include_tasks: metallb.yml
