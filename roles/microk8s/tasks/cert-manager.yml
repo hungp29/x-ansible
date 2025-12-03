@@ -1,4 +1,4 @@
-- name: Create cluster issuer
+- name: Create cluster issuer yaml from template
   template:
     src: cluster-issuer.yaml.j2
     dest: /tmp/cluster-issuer.yaml
