@@ -6,3 +6,6 @@
 
 # - name: Configure MetalLB
 #   include_tasks: metallb.yml
+
+- name: Configure Cert Manager
+  include_tasks: cert-manager.yml

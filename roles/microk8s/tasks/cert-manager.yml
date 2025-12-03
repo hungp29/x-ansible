@@ -1,0 +1,7 @@
+- name: Create cluster issuer
+  template:
+    src: cluster-issuer.yaml.j2
+    dest: /tmp/cluster-issuer.yaml
+
+- name: Apply cluster issuer
+  shell: microk8s kubectl apply -f /tmp/cluster-issuer.yaml

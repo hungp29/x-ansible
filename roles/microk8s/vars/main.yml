@@ -1,2 +1,11 @@
 microk8s_version: "1.32"
-metallb_ip_range: "192.168.0.150-192.168.0.200" # IP range for MetalLB
+
+# MetalLB
+metallb_ip_range: "192.168.0.150-192.168.0.200"
+
+# Cert Manager
+cluster_issuer_name: "letsencrypt-prod"
+acme_email: "hung.phamqk@gmail.com"
+acme_server: "https://acme-v02.api.letsencrypt.org/directory"
+acme_private_key_secret: "letsencrypt-prod-key"
+ingress_class_name: "nginx"
