@@ -1,0 +1,30 @@
+name: Deploy Infra with Ansible
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Install Ansible
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ansible
+
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.ANSIBLE_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan ${{ secrets.ANSIBLE_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Run Ansible
+      run: |
+        ansible-playbook -i ansible/inventories/production/hosts.ini ansible/playbooks/site.yml

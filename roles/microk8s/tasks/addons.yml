@@ -1,0 +1,14 @@
+- name: Enable DNS
+  shell: microk8s enable dns
+  args:
+    creates: /var/snap/microk8s/common/addons/core/dns
+
+- name: Enable Ingress
+  shell: microk8s enable ingress
+  args:
+    creates: /var/snap/microk8s/common/addons/core/ingress
+
+- name: Enable Storage
+  shell: microk8s enable storage
+  args:
+    creates: /var/snap/microk8s/common/addons/core/storage

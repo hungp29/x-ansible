@@ -1,0 +1,2 @@
+microk8s_version: "1.32"
+metallb_ip_range: "192.168.0.150-192.168.0.200" # IP range for MetalLB
