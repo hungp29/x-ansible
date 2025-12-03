@@ -1,11 +1,22 @@
 - name: Get enabled addons
-  shell: microk8s status --format json
+  shell: microk8s status --format yaml
   register: microk8s_status
   changed_when: false
 
-- set_fact:
-    addons_enabled: "{{ microk8s_status.stdout | from_json | dict2items(key_name='name', value_name='value') | 
-                       selectattr('value.enabled', 'defined') | selectattr('value.enabled') | map(attribute='name') | list }}"
+- name: Get enabled addons
+  set_fact:
+    addons_enabled: >-
+      {{
+        microk8s_status.stdout
+        | from_yaml
+        | dict2items(key_name='key', value_name='val')
+        | selectattr('key', 'equalto', 'addons')
+        | map(attribute='val')
+        | first
+        | selectattr('status', 'equalto', 'enabled')
+        | map(attribute='name')
+        | list
+      }}
 
 - name: Enable DNS
   shell: microk8s enable dns
