@@ -1,14 +1,20 @@
+- name: Get enabled addons
+  shell: microk8s status --format json
+  register: microk8s_status
+  changed_when: false
+
+- set_fact:
+    addons_enabled: "{{ microk8s_status.stdout | from_json | dict2items(key_name='name', value_name='value') | 
+                       selectattr('value.enabled', 'defined') | selectattr('value.enabled') | map(attribute='name') | list }}"
+
 - name: Enable DNS
   shell: microk8s enable dns
-  args:
-    creates: /var/snap/microk8s/common/addons/core/dns
+  when: "'dns' not in addons_enabled"
 
 - name: Enable Ingress
   shell: microk8s enable ingress
-  args:
-    creates: /var/snap/microk8s/common/addons/core/ingress
+  when: "'ingress' not in addons_enabled"
 
-- name: Enable Storage
-  shell: microk8s enable storage
-  args:
-    creates: /var/snap/microk8s/common/addons/core/storage
+- name: Enable Hostpath Storage
+  shell: microk8s enable hostpath-storage
+  when: "'hostpath-storage' not in addons_enabled"
