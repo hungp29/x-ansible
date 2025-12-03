@@ -1,4 +1,4 @@
-- name: Install snapd (required)
+- name: Install snapd
   apt:
     name: snapd
     state: present

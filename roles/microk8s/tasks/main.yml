@@ -1,7 +1,7 @@
 - name: Install MicroK8s
   include_tasks: install.yml
 
-- name: Enable addons (DNS, Ingress, Storage)
+- name: Enable addons
   include_tasks: addons.yml
 
 - name: Configure MetalLB

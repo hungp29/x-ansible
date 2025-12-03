@@ -1,9 +1,4 @@
-- name: Enable MetalLB
-  shell: microk8s enable metallb:{{ metallb_ip_range }}
-  args:
-    creates: /var/snap/microk8s/common/addons/core/metallb
-
-- name: Apply custom MetalLB config (optional)
+- name: Apply custom MetalLB config
   template:
     src: metallb-config.yaml.j2
     dest: /tmp/metallb-config.yaml

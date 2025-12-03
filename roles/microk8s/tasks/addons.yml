@@ -3,8 +3,7 @@
   register: microk8s_status
   changed_when: false
 
-- name: Get enabled addons
-  set_fact:
+- set_fact:
     addons_enabled: >-
       {{
         microk8s_status.stdout
@@ -29,3 +28,7 @@
 - name: Enable Hostpath Storage
   shell: microk8s enable hostpath-storage
   when: "'hostpath-storage' not in addons_enabled"
+
+- name: Enable MetalLB
+  shell: microk8s enable metallb
+  when: "'metallb' not in addons_enabled"
