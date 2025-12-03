@@ -27,4 +27,4 @@ jobs:
 
     - name: Run Ansible
       run: |
-        ansible-playbook -i ansible/inventories/production/hosts.ini ansible/playbooks/site.yml
+        ansible-playbook -i x-ansible/inventories/production/hosts.ini x-ansible/playbooks/site.yml
