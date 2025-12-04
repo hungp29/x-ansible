@@ -1,0 +1,134 @@
+- name: Ensure database namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: database
+    state: present
+
+# --- Root Secret ---
+- name: Check if root secret exists
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: database
+    name: postgres-root-secret
+  register: root_secret_info
+  ignore_errors: yes
+
+- name: Generate root password if secret does not exist
+  ansible.builtin.set_fact:
+    postgres_root_password: "{{ lookup('password', '/dev/null length=20 chars=ascii_letters,digits') }}"
+  when: root_secret_info.resources | length == 0
+
+- name: Set root password from existing secret
+  ansible.builtin.set_fact:
+    postgres_root_password: "{{ root_secret_info.resources[0].data.password | b64decode }}"
+  when: root_secret_info.resources | length > 0
+
+- name: Create or update root secret
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    name: postgres-root-secret
+    namespace: database
+    type: Opaque
+    stringData:
+      username: "{{ postgres_root_user }}"
+      password: "{{ postgres_root_password }}"
+    state: present
+
+# --- PVC & Deployment & Service ---
+- name: Deploy PostgreSQL PVC
+  template:
+    src: postgres-pvc.yaml.j2
+    dest: /tmp/postgres-pvc.yaml
+
+- name: Apply PVC
+  command: microk8s kubectl apply -f /tmp/postgres-pvc.yaml
+
+- name: Deploy PostgreSQL
+  template:
+    src: postgres-deployment.yaml.j2
+    dest: /tmp/postgres-deployment.yaml
+
+- name: Apply PostgreSQL deployment
+  command: microk8s kubectl apply -f /tmp/postgres-deployment.yaml
+
+- name: Deploy PostgreSQL service
+  template:
+    src: postgres-service.yaml.j2
+    dest: /tmp/postgres-service.yaml
+
+- name: Apply PostgreSQL service
+  command: microk8s kubectl apply -f /tmp/postgres-service.yaml
+
+- name: Wait for PostgreSQL pod ready
+  shell: microk8s kubectl wait --for=condition=ready pod -l app=postgres -n database --timeout=120s
+  ignore_errors: yes
+
+# --- Multi DB/User ---
+# --- 2. Check existing user secrets ---
+- name: Check existing user secrets
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: database
+    name: "postgres-{{ item.1.user }}-secret"
+  loop: "{{ postgres_databases | subelements('users') }}"
+  register: user_secret_info
+  ignore_errors: yes
+
+# --- 3. Build user password map ---
+- name: Build user password map
+  ansible.builtin.set_fact:
+    user_passwords: "{{ user_passwords | default({}) | combine({
+      item.1.user: (
+        user_secret_info.results[loop.index0].resources[0].data.password | b64decode
+        if (user_secret_info.results[loop.index0].resources | length > 0)
+        else lookup('password', '/dev/null length=20 chars=ascii_letters,digits')
+      )
+    }) }}"
+  loop: "{{ postgres_databases | subelements('users') }}"
+
+# --- 4. Create Kubernetes Secret for each user ---
+- name: Create Kubernetes Secret for each PostgreSQL user
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Secret
+    namespace: database
+    name: "postgres-{{ item.1.user }}-secret"
+    type: Opaque
+    stringData:
+      username: "{{ item.1.user }}"
+      password: "{{ user_passwords[item.1.user] }}"
+  loop: "{{ postgres_databases | subelements('users') }}"
+
+# --- 5. Create databases ---
+- name: Create PostgreSQL databases
+  community.postgresql.postgresql_db:
+    name: "{{ item.name }}"
+    state: present
+    login_user: "{{ postgres_root_user }}"
+    login_password: "{{ postgres_root_password }}"
+  loop: "{{ postgres_databases }}"
+
+# --- 6. Create users and grant privileges ---
+- name: Create users and grant privileges
+  community.postgresql.postgresql_user:
+    name: "{{ item.1.user }}"
+    password: "{{ user_passwords[item.1.user] }}"
+    priv: >-
+      {{ item.0.name }}:
+      {% if item.1.role == 'rw' %}
+      ALL
+      {% elif item.1.role == 'ro' %}
+      CONNECT/SELECT
+      {% elif item.1.role == 'select' %}
+      SELECT
+      {% else %}
+      CONNECT
+      {% endif %}
+    state: present
+    login_user: "{{ postgres_root_user }}"
+    login_password: "{{ postgres_root_password }}"
+  loop: "{{ postgres_databases | subelements('users') }}"
