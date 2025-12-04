@@ -27,7 +27,7 @@ jobs:
 
     - name: Run Ansible
       run: |
-        ansible-playbook playbooks/site.yml | tee ansible.log
+        ansible-playbook -i inventories/production/hosts.ini playbooks/site.yml | tee ansible.log
         
         echo "## 🚀 Deployment Completed" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
