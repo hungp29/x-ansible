@@ -1,0 +1,38 @@
+# ------------------------------------------------------------
+# MicroK8s
+# ------------------------------------------------------------
+microk8s_version: "1.32"
+
+# MetalLB
+metallb_ip_range: "192.168.0.150-192.168.0.200"
+
+# Cert Manager
+cluster_issuer_name: "letsencrypt-prod"
+acme_email: "hung.phamqk@gmail.com"
+acme_server: "https://acme-v02.api.letsencrypt.org/directory"
+acme_private_key_secret: "letsencrypt-prod-key"
+ingress_class_name: "nginx"
+
+# ------------------------------------------------------------
+# End MicroK8s
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# Postgres
+# ------------------------------------------------------------
+# Root user
+postgres_root_user: admin
+postgres_root_password: ""
+
+# Multi database & user
+postgres_databases:
+  - name: moho
+    users:
+      - user: moho-user-rw
+        role: rw
+      - user: moho-user-ro
+        role: ro
+# ------------------------------------------------------------
+# End Postgres
+# ------------------------------------------------------------
