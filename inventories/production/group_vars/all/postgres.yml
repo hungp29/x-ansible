@@ -1,0 +1,12 @@
+# Root user
+postgres_root_user: admin
+postgres_root_password: ""
+
+# Multi database & user
+postgres_databases:
+  - name: moho
+    users:
+      - user: moho-user-rw
+        role: rw
+      - user: moho-user-ro
+        role: ro
