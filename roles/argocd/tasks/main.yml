@@ -1,0 +1,6 @@
+- name: Install ArgoCD
+  include_tasks: install.yml
+
+- name: Configure ArgoCD ingress (subpath and TLS at ingress)
+  include_tasks: ingress.yml
+  when: argocd_ingress_enabled | default(false) | bool

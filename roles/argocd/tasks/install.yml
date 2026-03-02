@@ -1,0 +1,30 @@
+- name: Ensure ArgoCD namespace exists
+  ansible.builtin.shell: microk8s kubectl create namespace "{{ argocd_namespace }}"
+  register: ns_create
+  changed_when: ns_create.rc == 0 and "AlreadyExists" not in (ns_create.stderr | default(''))
+  failed_when: ns_create.rc != 0 and "AlreadyExists" not in (ns_create.stderr | default(''))
+
+- name: Download ArgoCD install manifest
+  ansible.builtin.get_url:
+    url: "{{ argocd_install_manifest_url }}"
+    dest: /tmp/argocd-install.yaml
+    mode: "0644"
+    force: yes
+
+# Server-side apply avoids storing full resource in last-applied-configuration annotation,
+# which would exceed the 256KB annotation limit on the applicationsets.argoproj.io CRD.
+- name: Apply ArgoCD install manifest (server-side)
+  ansible.builtin.shell: >
+    microk8s kubectl apply -f /tmp/argocd-install.yaml
+    -n "{{ argocd_namespace }}"
+    --server-side --force-conflicts
+  register: argocd_apply
+  changed_when: "'configured' in argocd_apply.stdout or 'created' in argocd_apply.stdout"
+
+- name: Wait for ArgoCD server deployment to be ready
+  ansible.builtin.shell: >
+    microk8s kubectl wait --for=condition=available
+    deployment/argocd-server -n "{{ argocd_namespace }}"
+    --timeout=300s
+  when: argocd_wait_ready | default(true) | bool
+  ignore_errors: yes

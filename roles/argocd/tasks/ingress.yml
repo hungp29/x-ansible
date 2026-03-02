@@ -1,0 +1,42 @@
+- name: Require ingress host when ArgoCD ingress is enabled
+  ansible.builtin.assert:
+    that: argocd_ingress_host | length > 0
+    fail_msg: "argocd_ingress_host must be set when argocd_ingress_enabled is true"
+
+- name: Patch ArgoCD ConfigMap for subpath and insecure mode
+  ansible.builtin.shell: >
+    microk8s kubectl patch configmap argocd-cmd-params-cm
+    -n "{{ argocd_namespace }}"
+    --type merge
+    -p '{{ argocd_cmd_params_patch | to_json }}'
+  vars:
+    argocd_cmd_params_patch:
+      data:
+        server.rootpath: "{{ argocd_path }}"
+        server.basehref: "{{ argocd_path }}"
+        server.insecure: "true"
+  register: cm_patch
+  changed_when: cm_patch.rc == 0
+
+- name: Restart ArgoCD server to apply subpath config
+  ansible.builtin.shell: >
+    microk8s kubectl rollout restart deployment/argocd-server
+    -n "{{ argocd_namespace }}"
+  register: rollout_restart
+  changed_when: rollout_restart.rc == 0
+
+- name: Wait for ArgoCD server rollout after config change
+  ansible.builtin.shell: >
+    microk8s kubectl rollout status deployment/argocd-server
+    -n "{{ argocd_namespace }}"
+    --timeout=120s
+
+- name: Create ArgoCD ingress manifest
+  ansible.builtin.template:
+    src: ingress.yaml.j2
+    dest: /tmp/argocd-ingress.yaml
+
+- name: Apply ArgoCD ingress
+  ansible.builtin.shell: microk8s kubectl apply -f /tmp/argocd-ingress.yaml
+  register: ingress_apply
+  changed_when: "'configured' in ingress_apply.stdout or 'created' in ingress_apply.stdout"

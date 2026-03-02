@@ -1,0 +1,14 @@
+---
+argocd_version: "stable"
+argocd_namespace: "argocd"
+argocd_wait_ready: true
+argocd_install_manifest_url: "https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml"
+
+# Ingress at subpath (e.g. https://host/argocd)
+argocd_ingress_enabled: true
+argocd_path: "/argocd"
+argocd_ingress_host: ""
+argocd_ingress_class: "nginx"
+argocd_ingress_tls_secret: "argocd-server-tls"
+argocd_ingress_use_cert_manager: true
+argocd_ingress_cluster_issuer: "letsencrypt-prod"

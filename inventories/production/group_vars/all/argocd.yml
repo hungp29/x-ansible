@@ -1,0 +1,7 @@
+---
+# ArgoCD: set host so UI is at https://<host>/argocd
+argocd_ingress_enabled: true
+argocd_ingress_host: "momofamily.tplinkdns.com"
+# argocd_version: "stable"
+# argocd_path: "/argocd"
+# argocd_ingress_cluster_issuer: "letsencrypt-prod"
