@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: "{{ argocd_namespace }}"
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+{% if argocd_ingress_use_cert_manager | default(false) | bool %}
+    cert-manager.io/cluster-issuer: "{{ argocd_ingress_cluster_issuer }}"
+{% endif %}
+spec:
+  ingressClassName: "{{ argocd_ingress_class }}"
+  rules:
+  - host: "{{ argocd_ingress_host }}"
+    http:
+      paths:
+      - path: "{{ argocd_path }}"
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              name: http
+{% if argocd_ingress_tls_secret %}
+  tls:
+  - hosts:
+    - "{{ argocd_ingress_host }}"
+    secretName: "{{ argocd_ingress_tls_secret }}"
+{% endif %}

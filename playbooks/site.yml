@@ -2,4 +2,5 @@
   become: yes
   roles:
     - microk8s
+    - argocd
     # - postgres
