@@ -20,9 +20,11 @@ vault_key_threshold: 1
 
 # ── Vault UI ingress ───────────────────────────────────────────────────────────
 vault_ingress_enabled: true
-vault_ingress_host: ""           # must be set in group_vars when enabled
+# Vault's UI hard-codes /v1/ and /ui/ as absolute paths in its compiled JS,
+# so sub-path routing (/vault/...) cannot work without rewriting the JS bundle.
+# Use a dedicated subdomain (e.g. vault.example.com) so Vault runs at root /.
+vault_ingress_host: ""           # must be set in group_vars when enabled; e.g. vault.example.com
 vault_ingress_class: "nginx"
-vault_ingress_path: "/vault"
 vault_ingress_tls_secret: "vault-tls"
 vault_ingress_use_cert_manager: true
 vault_ingress_cluster_issuer: "letsencrypt-prod"

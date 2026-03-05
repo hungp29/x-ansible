@@ -2,15 +2,18 @@
 - name: Require ingress host when Vault ingress is enabled
   ansible.builtin.assert:
     that: vault_ingress_host | length > 0
-    fail_msg: "vault_ingress_host must be set when vault_ingress_enabled is true"
+    fail_msg: >
+      vault_ingress_host must be set when vault_ingress_enabled is true.
+      Use a dedicated subdomain (e.g. vault.example.com) — Vault's UI hard-codes
+      /v1/ and /ui/ as absolute paths so sub-path routing is not supported.
 
-- name: Render Vault UI ingress manifest
+- name: Render Vault ingress manifest
   ansible.builtin.template:
     src: ingress.yaml.j2
     dest: /tmp/vault-ingress.yaml
     mode: "0644"
 
-- name: Apply Vault UI ingress
+- name: Apply Vault ingress
   ansible.builtin.shell: microk8s kubectl apply -f /tmp/vault-ingress.yaml
   register: ingress_apply
   changed_when: "'configured' in ingress_apply.stdout or 'created' in ingress_apply.stdout"

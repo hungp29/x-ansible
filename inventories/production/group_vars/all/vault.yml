@@ -1,10 +1,13 @@
 ---
 # HashiCorp Vault
 vault_ingress_enabled: true
-vault_ingress_host: "momofamily.tplinkdns.com"
+# Vault must run on a dedicated subdomain — its compiled JS hard-codes /v1/ and
+# /ui/ as absolute paths, making sub-path routing (/vault) impossible without
+# rewriting the JS bundle.
+# Add a DNS A record: vault.momofamily.tplinkdns.com → your server IP.
+vault_ingress_host: "vault.momofamily.tplinkdns.com"
 # vault_dev_mode: false
 # vault_chart_version: ""
-# vault_ingress_path: "/vault"
 # vault_ingress_cluster_issuer: "letsencrypt-prod"
 
 # External Secrets Operator

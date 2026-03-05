@@ -1,19 +1,19 @@
 ---
-# Primary ingress: maps /vault → Vault root with path-stripping rewrite.
-# proxy_redirect rewrites any Location header Vault sends (e.g. /ui → /vault/ui)
-# so the browser stays inside the /vault sub-path.
+# Vault UI + API ingress.
+#
+# Vault's compiled JS hard-codes /v1/ and /ui/ as absolute paths, so a
+# sub-path prefix (e.g. /vault) cannot work without rewriting the JS bundle.
+# Vault is therefore served at the root of a dedicated subdomain
+# (vault_ingress_host), where all paths are native and need no rewriting.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: vault-ui-ingress
+  name: vault-ingress
   namespace: {{ vault_namespace }}
   annotations:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    # Rewrite Location headers: /ui/… → /vault/ui/… etc.
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_redirect ~^/(.*) /vault/$1;
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 {% if vault_ingress_use_cert_manager | default(false) | bool %}
     cert-manager.io/cluster-issuer: "{{ vault_ingress_cluster_issuer }}"
 {% endif %}
@@ -23,40 +23,7 @@ spec:
     - host: "{{ vault_ingress_host }}"
       http:
         paths:
-          - path: "{{ vault_ingress_path }}(/|$)(.*)"
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: vault-ui
-                port:
-                  number: 8200
-{% if vault_ingress_tls_secret %}
-  tls:
-    - hosts:
-        - "{{ vault_ingress_host }}"
-      secretName: "{{ vault_ingress_tls_secret }}"
-{% endif %}
----
-# Pass-through ingress: serves Vault UI assets (/ui) and API calls (/v1) at
-# their native root paths. The Vault Ember UI hard-codes XHR calls to /v1/…
-# and loads JS/CSS from /ui/…, so these must be reachable without the /vault prefix.
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: vault-passthrough-ingress
-  namespace: {{ vault_namespace }}
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-{% if vault_ingress_use_cert_manager | default(false) | bool %}
-    cert-manager.io/cluster-issuer: "{{ vault_ingress_cluster_issuer }}"
-{% endif %}
-spec:
-  ingressClassName: "{{ vault_ingress_class }}"
-  rules:
-    - host: "{{ vault_ingress_host }}"
-      http:
-        paths:
-          # Vault UI static assets (JS, CSS, fonts, images)
+          # Vault UI (Ember.js app at /ui/…)
           - path: /ui
             pathType: Prefix
             backend:
@@ -64,12 +31,20 @@ spec:
                 name: vault-ui
                 port:
                   number: 8200
-          # Vault HTTP API – called by the UI for auth, secrets, sys endpoints
+          # Vault HTTP API (/v1/…) – called directly by the UI's JS bundle
           - path: /v1
             pathType: Prefix
             backend:
               service:
                 name: vault-active
+                port:
+                  number: 8200
+          # Root redirect: / → /ui (Vault itself handles this redirect)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vault-ui
                 port:
                   number: 8200
 {% if vault_ingress_tls_secret %}
