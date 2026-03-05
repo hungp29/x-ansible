@@ -1,0 +1,35 @@
+---
+# ── Vault ─────────────────────────────────────────────────────────────────────
+vault_namespace: "vault"
+vault_chart_version: ""          # empty = latest
+vault_helm_release: "vault"
+vault_helm_repo_name: "hashicorp"
+vault_helm_repo_url: "https://helm.releases.hashicorp.com"
+
+# Standalone mode stores data on a PVC.
+# Set vault_dev_mode: true for an ephemeral in-memory instance (no init/unseal needed).
+vault_dev_mode: false
+
+# Secret that holds the root token and unseal keys after first init.
+# Never committed; lives only inside the cluster.
+vault_init_secret_name: "vault-init-keys"
+
+# Number of unseal key shares / threshold (only used in standalone mode).
+vault_key_shares: 1
+vault_key_threshold: 1
+
+# ── Vault UI ingress ───────────────────────────────────────────────────────────
+vault_ingress_enabled: true
+vault_ingress_host: ""           # must be set in group_vars when enabled
+vault_ingress_class: "nginx"
+vault_ingress_path: "/vault"
+vault_ingress_tls_secret: "vault-tls"
+vault_ingress_use_cert_manager: true
+vault_ingress_cluster_issuer: "letsencrypt-prod"
+
+# ── External Secrets Operator ─────────────────────────────────────────────────
+eso_namespace: "external-secrets"
+eso_chart_version: ""            # empty = latest
+eso_helm_release: "external-secrets"
+eso_helm_repo_name: "external-secrets"
+eso_helm_repo_url: "https://charts.external-secrets.io"

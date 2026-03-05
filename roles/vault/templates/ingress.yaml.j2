@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-ui-ingress
+  namespace: {{ vault_namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # Rewrite /vault/<rest> → /<rest> so the upstream Vault service sees clean paths.
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+{% if vault_ingress_use_cert_manager | default(false) | bool %}
+    cert-manager.io/cluster-issuer: "{{ vault_ingress_cluster_issuer }}"
+{% endif %}
+spec:
+  ingressClassName: "{{ vault_ingress_class }}"
+  rules:
+    - host: "{{ vault_ingress_host }}"
+      http:
+        paths:
+          - path: "{{ vault_ingress_path }}(/|$)(.*)"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: vault-ui
+                port:
+                  number: 8200
+{% if vault_ingress_tls_secret %}
+  tls:
+    - hosts:
+        - "{{ vault_ingress_host }}"
+      secretName: "{{ vault_ingress_tls_secret }}"
+{% endif %}
