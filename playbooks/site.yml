@@ -3,5 +3,5 @@
   roles:
     - microk8s
     - argocd
-    - vault
+    # - vault
     # - postgres
