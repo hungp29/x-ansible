@@ -1,0 +1,16 @@
+---
+- name: Require ingress host when Vault ingress is enabled
+  ansible.builtin.assert:
+    that: vault_ingress_host | length > 0
+    fail_msg: "vault_ingress_host must be set when vault_ingress_enabled is true"
+
+- name: Render Vault UI ingress manifest
+  ansible.builtin.template:
+    src: ingress.yaml.j2
+    dest: /tmp/vault-ingress.yaml
+    mode: "0644"
+
+- name: Apply Vault UI ingress
+  ansible.builtin.shell: microk8s kubectl apply -f /tmp/vault-ingress.yaml
+  register: ingress_apply
+  changed_when: "'configured' in ingress_apply.stdout or 'created' in ingress_apply.stdout"

@@ -1,0 +1,11 @@
+---
+# HashiCorp Vault
+vault_ingress_enabled: true
+vault_ingress_host: "momofamily.tplinkdns.com"
+# vault_dev_mode: false
+# vault_chart_version: ""
+# vault_ingress_path: "/vault"
+# vault_ingress_cluster_issuer: "letsencrypt-prod"
+
+# External Secrets Operator
+# eso_chart_version: ""
